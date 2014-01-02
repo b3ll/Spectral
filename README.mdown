@@ -1,3 +1,5 @@
+> NOTE: This is unfinished, and a really nasty hack. I have *no* clue what will explode, but nothing will be permanent :P
+
 Title TBD
 =============
 

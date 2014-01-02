@@ -1,9 +1,15 @@
+//
+//  Tweak.xm
+//  BlurredLockscreenArtwork
+//
+//  Created by Adam Bell on 2014-01-02.
+//  Copyright (c) 2014 Adam Bell. All rights reserved.
+//
+
 #import <UIKit/UIKit.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <MediaPlayer/MediaPlayer.h>
-
-#include <dlfcn.h>
 
 #define VARIANT_LOCKSCREEN 0
 #define VARIANT_HOMESCREEN 1
@@ -119,6 +125,5 @@ static UIImage *_artworkImage = nil;
 %end
 
 %ctor {
-    dlopen("/System/Library/SpringBoardPlugins/NowPlayingArtLockScreen.lockbundle/NowPlayingArtLockScreen", 2);
     %init(NowPlayingArtView);
 }
