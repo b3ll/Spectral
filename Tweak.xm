@@ -6,54 +6,20 @@
 //  Copyright (c) 2014 Adam Bell. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
-#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
+#import <QuartzCore/QuartzCore.h>
+#import <UIKit/UIKit.h>
 #import <MediaPlayer/MediaPlayer.h>
+
+#import "PrivateHeaders.h"
+#import "SBBlurryArtworkView.h"
 
 #include <dlfcn.h>
 
-#define VARIANT_LOCKSCREEN 0
-#define VARIANT_HOMESCREEN 1
-
-@interface SBWallpaperController : NSObject
-+ (instancetype)sharedInstance;
-
-- (void)setLockscreenOnlyWallpaperAlpha:(float)alpha;
-- (id)_newWallpaperViewForProcedural:(id)proceduralWallpaper orImage:(UIImage *)image;
-- (id)_clearWallpaperView:(id *)wallpaperView;
-- (void)_handleWallpaperChangedForVariant:(NSUInteger)variant;
-- (void)_updateSeparateWallpaper;
-- (void)_reconfigureBlurViewsForVariant:(NSUInteger)variant;
-- (void)_updateBlurImagesForVariant:(NSUInteger)variant;
-@end
-
-@interface SBFStaticWallpaperView : UIView
-- (instancetype)initWithFrame:(CGRect)frame wallpaperImage:(UIImage *)wallpaperImage;
-- (UIImageView *)contentView;
-- (void)setVariant:(NSUInteger)variant;
-@end
-
-@interface SBMediaController : NSObject
-+ (instancetype)sharedInstance;
-
-- (id)_nowPlayingInfo;
-- (UIImage *)artwork;
-- (NSUInteger)trackUniqueIdentifier;
-- (BOOL)isPlaying;
-@end
-
-@interface SBUIController : NSObject
-+ (instancetype)sharedInstance;
-
-- (void)setLockscreenArtworkImage:(UIImage *)artworkImage;
-- (void)updateLockscreenArtwork;
-@end
-
 %group NowPlayingArtView
 
-static SBFStaticWallpaperView *_wallpaperView;
-static UIImage *_artworkImage = nil;
+static SBBlurryArtworkView *_blurryArtworkView = nil;
 
 static NSUInteger _uniqueIdentifier = 0;
 
@@ -78,6 +44,8 @@ static NSUInteger _uniqueIdentifier = 0;
                                                  name:@"SBMediaNowPlayingChangedNotification"
                                                object:nil];
 
+    _blurryArtworkView = [[SBBlurryArtworkView alloc] initWithFrame:CGRectZero];
+
     return controller;
 }
 
@@ -88,7 +56,7 @@ static NSUInteger _uniqueIdentifier = 0;
 
         // Try to limit the number of times this needs to be run because it's expensive
         NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
-        if (trackUniqueIdentifier != _uniqueIdentifier || _artworkImage == nil) {
+        if (trackUniqueIdentifier != _uniqueIdentifier || _blurryArtworkView.artworkImage == nil) {
             _uniqueIdentifier = trackUniqueIdentifier;
 
             UIImage *artwork = mediaController.artwork;
@@ -104,37 +72,12 @@ static NSUInteger _uniqueIdentifier = 0;
 
 %new
 - (void)setLockscreenArtworkImage:(UIImage *)artworkImage {
-    // Clear wallpaper view except that explodes so not touching that for now [SBWallpaperController _clearWallpaperView:&wallpaperView];
-    // Add New wallpaper
-    // setVariant:0 ?
-    // _handleWallpaperChangedForVariant:0 breaks
+    _blurryArtworkView.artworkImage = artworkImage;
+}
 
-    SBWallpaperController *controller = [%c(SBWallpaperController) sharedInstance];
-
-    id wallpaper = [controller valueForKeyPath:@"_lockscreenWallpaperView"];
-    if (wallpaper != nil)
-        [wallpaper removeFromSuperview];
-    [controller setValue:nil forKeyPath:@"_lockscreenWallpaperView"];
-
-    if (artworkImage != nil && [artworkImage isKindOfClass:[UIImage class]]) {
-        CGImageRef image = CGImageCreateCopy(artworkImage.CGImage);
-        UIImage *newImage = [UIImage imageWithCGImage:image scale:artworkImage.scale orientation:artworkImage.imageOrientation];
-        artworkImage = newImage;
-
-        _artworkImage = artworkImage;
-
-        _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:_artworkImage];
-        [_wallpaperView setVariant:VARIANT_LOCKSCREEN];
-
-        [controller setValue:_wallpaperView forKeyPath:@"_lockscreenWallpaperView"];
-    }
-    else {
-        _wallpaperView = nil;
-        [controller _updateSeparateWallpaper];
-    }
-
-    [controller _reconfigureBlurViewsForVariant:0];
-    [controller _updateBlurImagesForVariant:0];
+%new
+- (SBBlurryArtworkView *)blurryArtworkView {
+    return _blurryArtworkView;
 }
 
 // Fix for the original lockscreen wallpaper not showing when locked and paused
@@ -149,15 +92,33 @@ static NSUInteger _uniqueIdentifier = 0;
 
 %end
 
-%hook SBWallpaperController
+%hook _NowPlayingArtView
 
-- (id)_wallpaperViewForVariant:(NSUInteger)variant {
-    if (_artworkImage == nil || _wallpaperView == nil || variant == 1) {
-        return %orig;
+- (void)layoutSubviews {
+    %orig;
+
+    _blurryArtworkView.frame = [UIScreen mainScreen].bounds;
+
+// Hack to find the SBLockScreenScrollView and use it as a reference point
+// ...don't ever use this in shipping code :P
+
+    SBLockScreenScrollView *scrollView = nil;
+    UIView *superview = self.superview;
+    Class SBLockScreenScrollViewClass = %c(SBLockScreenScrollView);
+    while (scrollView == nil) {
+        for (UIView *subview in superview.subviews) {
+            if ([subview isKindOfClass:SBLockScreenScrollViewClass])
+                scrollView = (SBLockScreenScrollView *)subview;
+        }
+
+        superview = superview.superview;
+        if (superview == nil)
+            break;
     }
-    else {
-        return _wallpaperView;
-    }
+
+    if (_blurryArtworkView.superview != nil)
+        [_blurryArtworkView removeFromSuperview];
+    [scrollView.superview insertSubview:_blurryArtworkView belowSubview:scrollView];
 }
 
 %end
