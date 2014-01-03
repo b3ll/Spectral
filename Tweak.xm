@@ -11,11 +11,14 @@
 #import <Foundation/Foundation.h>
 #import <MediaPlayer/MediaPlayer.h>
 
+#include <dlfcn.h>
+
 #define VARIANT_LOCKSCREEN 0
 #define VARIANT_HOMESCREEN 1
 
 @interface SBWallpaperController : NSObject
 + (instancetype)sharedInstance;
+
 - (void)setLockscreenOnlyWallpaperAlpha:(float)alpha;
 - (id)_newWallpaperViewForProcedural:(id)proceduralWallpaper orImage:(UIImage *)image;
 - (id)_clearWallpaperView:(id *)wallpaperView;
@@ -31,8 +34,20 @@
 - (void)setVariant:(NSUInteger)variant;
 @end
 
-@interface SpringBoard : NSObject
+@interface SBMediaController : NSObject
++ (instancetype)sharedInstance;
+
+- (id)_nowPlayingInfo;
+- (UIImage *)artwork;
+- (NSUInteger)trackUniqueIdentifier;
+- (BOOL)isPlaying;
+@end
+
+@interface SBUIController : NSObject
++ (instancetype)sharedInstance;
+
 - (void)setLockscreenArtworkImage:(UIImage *)artworkImage;
+- (void)updateLockscreenArtwork;
 @end
 
 %group NowPlayingArtView
@@ -40,45 +55,59 @@
 static SBFStaticWallpaperView *_wallpaperView;
 static UIImage *_artworkImage = nil;
 
-%hook SpringBoard
-- (void)applicationDidFinishLaunching:(BOOL)finished {
-    %orig;
+static NSUInteger _uniqueIdentifier = 0;
 
-    MPNowPlayingInfoCenter *infoCenter = [MPNowPlayingInfoCenter defaultCenter];
-    [infoCenter addObserver:self
-                 forKeyPath:@"_nowPlayingInfo"
-                    options:NSKeyValueObservingOptionNew
-                    context:NULL];
+%hook NowPlayingArtPluginController
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    [[%c(SBUIController) sharedInstance] updateLockscreenArtwork];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    %orig;
+    [[%c(SBUIController) sharedInstance] updateLockscreenArtwork];
+}
+%end
+
+%hook SBUIController
+- (id)init {
+    SBUIController *controller = %orig;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(currentSongChanged:)
-                                                 name:MPMusicPlayerControllerNowPlayingItemDidChangeNotification
+                                                 name:@"SBMediaNowPlayingChangedNotification"
                                                object:nil];
-    [[MPMusicPlayerController iPodMusicPlayer] beginGeneratingPlaybackNotifications];
+
+    return controller;
+}
+
+%new
+- (void)updateLockscreenArtwork {
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^(){
+        SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
+
+        // Try to limit the number of times this needs to be run because it's expensive
+        NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
+        if (trackUniqueIdentifier != _uniqueIdentifier || _artworkImage == nil) {
+            _uniqueIdentifier = trackUniqueIdentifier;
+
+            UIImage *artwork = mediaController.artwork;
+            self.lockscreenArtworkImage = artwork;
+        }
+    }];
 }
 
 %new
 - (void)currentSongChanged:(NSNotification *)notification {
-    MPMusicPlayerController *iPodMusicPlayer = [MPMusicPlayerController iPodMusicPlayer];
-    UIImage *artworkImage = [[iPodMusicPlayer.nowPlayingItem valueForProperty:MPMediaItemPropertyArtwork] imageWithSize:CGSizeMake(512.0, 512.0)];
-    self.lockscreenArtworkImage = artworkImage;
-}
-
-%new
-- (void)observeValueForKeyPath:(NSString *)path ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if ([path isEqualToString:@"_nowPlayingInfo"]) {
-        NSDictionary *nowPlayingInfo = [change objectForKey:NSKeyValueChangeNewKey];
-        UIImage *artworkImage = [nowPlayingInfo[MPMediaItemPropertyArtwork] imageWithSize:CGSizeMake(512.0, 512.0)];
-        self.lockscreenArtworkImage = artworkImage;
-    }
+    [self updateLockscreenArtwork];
 }
 
 %new
 - (void)setLockscreenArtworkImage:(UIImage *)artworkImage {
-    // clear wallpaper view except that explodes so not touching that for now [SBWallpaperController _clearWallpaperView:&wallpaperView];
-    // new wallpaper
+    // Clear wallpaper view except that explodes so not touching that for now [SBWallpaperController _clearWallpaperView:&wallpaperView];
+    // Add New wallpaper
     // setVariant:0 ?
-    // _handleWallpaperChangedForVariant:0
+    // _handleWallpaperChangedForVariant:0 breaks
 
     SBWallpaperController *controller = [%c(SBWallpaperController) sharedInstance];
 
@@ -108,6 +137,16 @@ static UIImage *_artworkImage = nil;
     [controller _updateBlurImagesForVariant:0];
 }
 
+// Fix for the original lockscreen wallpaper not showing when locked and paused
+- (void)cleanUpOnFrontLocked {
+    %orig;
+
+    SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
+    if (!mediaController.isPlaying) {
+        self.lockscreenArtworkImage = nil;
+    }
+}
+
 %end
 
 %hook SBWallpaperController
@@ -122,8 +161,10 @@ static UIImage *_artworkImage = nil;
 }
 
 %end
+
 %end
 
 %ctor {
+    dlopen("/System/Library/SpringBoardPlugins/NowPlayingArtLockScreen.lockbundle/NowPlayingArtLockScreen", 2);
     %init(NowPlayingArtView);
 }
