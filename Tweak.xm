@@ -24,6 +24,7 @@
 - (id)_clearWallpaperView:(id *)wallpaperView;
 - (void)_handleWallpaperChangedForVariant:(NSUInteger)variant;
 - (void)_updateSeparateWallpaper;
+- (void)_updateSharedWallpaper;
 - (void)_reconfigureBlurViewsForVariant:(NSUInteger)variant;
 - (void)_updateBlurImagesForVariant:(NSUInteger)variant;
 @end
@@ -32,6 +33,13 @@
 - (instancetype)initWithFrame:(CGRect)frame wallpaperImage:(UIImage *)wallpaperImage;
 - (UIImageView *)contentView;
 - (void)setVariant:(NSUInteger)variant;
+- (void)setZoomFactor:(float)zoomFactor;
+@end
+
+@interface _SBFakeBlurView : UIView
++ (UIImage *)_imageForStyle:(int *)style withSource:(SBFStaticWallpaperView *)source;
+- (void)updateImageWithSource:(id)source;
+- (void)reconfigureWithSource:(id)source;
 @end
 
 @interface SBMediaController : NSObject
@@ -50,10 +58,93 @@
 - (void)updateLockscreenArtwork;
 @end
 
+@interface _NowPlayingArtView : UIView
+@end
+
+@interface SBLockScreenScrollView : UIScrollView
+@end
+
+@interface SBBlurryArtworkView : UIView
+- (void)setArtworkImage:(UIImage *)image;
+@end
+
+@implementation SBBlurryArtworkView {
+    /*UIToolbar *_blurView;*/
+    SBFStaticWallpaperView *_wallpaperView;
+    UIImageView *_imageView;
+
+    UIImage *_artworkImage;
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self != nil) {
+        _imageView = [[UIImageView alloc] initWithFrame:frame];
+        _imageView.contentMode = UIViewContentModeScaleAspectFill;
+        _imageView.clipsToBounds = YES;
+        [self addSubview:_imageView];
+    }
+
+    return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    CGRect bounds = self.bounds;
+    _imageView.frame = bounds;
+}
+
+- (void)setZoomFactor:(float)zoomFactor andStyle:(int)style {
+    SBWallpaperController *controller = [%c(SBWallpaperController) sharedInstance];
+    _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:_artworkImage];
+    [_wallpaperView removeFromSuperview];
+    // doesn't work yet, so use transform
+    _wallpaperView.zoomFactor = zoomFactor;
+
+    UIImage *blurredImage = [%c(_SBFakeBlurView) _imageForStyle:&style withSource:_wallpaperView];
+    _imageView.image = blurredImage;
+
+    _imageView.transform = CGAffineTransformScale(CGAffineTransformIdentity, zoomFactor, zoomFactor);
+}
+
+- (void)setArtworkImage:(UIImage *)artworkImage {
+    _artworkImage = artworkImage;
+
+    if (artworkImage == nil) {
+        self.hidden = YES;
+    }
+    else {
+        if (![artworkImage isKindOfClass:[UIImage class]]) {
+            _artworkImage = nil;
+            return;
+        }
+
+        SBWallpaperController *controller = [%c(SBWallpaperController) sharedInstance];
+        _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:artworkImage];
+        [_wallpaperView removeFromSuperview];
+
+        self.hidden = NO;
+
+        // 0 No blur
+        // 1 No blur
+        // 2 Barely any blur
+        // 3 blurred more than 4 (they're super close)
+        // 4 blurred less than 3
+        // 5 blurred less than 3 and 4
+        // 6 really blurred, lighter, most commonly used
+        // 7 blur? what's a blur? let's use black
+        int style = 6;
+        UIImage *blurredImage = [%c(_SBFakeBlurView) _imageForStyle:&style withSource:_wallpaperView];
+        _imageView.image = blurredImage;
+    }
+}
+
+@end
+
 %group NowPlayingArtView
 
-static SBFStaticWallpaperView *_wallpaperView;
-static UIImage *_artworkImage = nil;
+static SBBlurryArtworkView *_blurryArtworkView = nil;
 
 static NSUInteger _uniqueIdentifier = 0;
 
@@ -77,6 +168,8 @@ static NSUInteger _uniqueIdentifier = 0;
                                              selector:@selector(currentSongChanged:)
                                                  name:@"SBMediaNowPlayingChangedNotification"
                                                object:nil];
+
+    _blurryArtworkView = [[SBBlurryArtworkView alloc] initWithFrame:CGRectZero];
 
     return controller;
 }
@@ -104,37 +197,7 @@ static NSUInteger _uniqueIdentifier = 0;
 
 %new
 - (void)setLockscreenArtworkImage:(UIImage *)artworkImage {
-    // Clear wallpaper view except that explodes so not touching that for now [SBWallpaperController _clearWallpaperView:&wallpaperView];
-    // Add New wallpaper
-    // setVariant:0 ?
-    // _handleWallpaperChangedForVariant:0 breaks
-
-    SBWallpaperController *controller = [%c(SBWallpaperController) sharedInstance];
-
-    id wallpaper = [controller valueForKeyPath:@"_lockscreenWallpaperView"];
-    if (wallpaper != nil)
-        [wallpaper removeFromSuperview];
-    [controller setValue:nil forKeyPath:@"_lockscreenWallpaperView"];
-
-    if (artworkImage != nil && [artworkImage isKindOfClass:[UIImage class]]) {
-        CGImageRef image = CGImageCreateCopy(artworkImage.CGImage);
-        UIImage *newImage = [UIImage imageWithCGImage:image scale:artworkImage.scale orientation:artworkImage.imageOrientation];
-        artworkImage = newImage;
-
-        _artworkImage = artworkImage;
-
-        _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:_artworkImage];
-        [_wallpaperView setVariant:VARIANT_LOCKSCREEN];
-
-        [controller setValue:_wallpaperView forKeyPath:@"_lockscreenWallpaperView"];
-    }
-    else {
-        _wallpaperView = nil;
-        [controller _updateSeparateWallpaper];
-    }
-
-    [controller _reconfigureBlurViewsForVariant:0];
-    [controller _updateBlurImagesForVariant:0];
+    _blurryArtworkView.artworkImage = artworkImage;
 }
 
 // Fix for the original lockscreen wallpaper not showing when locked and paused
@@ -149,15 +212,42 @@ static NSUInteger _uniqueIdentifier = 0;
 
 %end
 
-%hook SBWallpaperController
+%hook _NowPlayingArtView
 
-- (id)_wallpaperViewForVariant:(NSUInteger)variant {
-    if (_artworkImage == nil || _wallpaperView == nil || variant == 1) {
-        return %orig;
+- (void)setArtworkView:(UIView *)view {
+    %orig;
+}
+
+- (void)layoutSubviews {
+    %orig;
+
+    _blurryArtworkView.frame = [UIScreen mainScreen].bounds;
+
+// Hack to find the SBLockScreenScrollView and use it as a reference point
+// ...don't ever use this in shipping code :P
+
+    SBLockScreenScrollView *scrollView = nil;
+    UIView *superview = self.superview;
+    Class SBLockScreenScrollViewClass = %c(SBLockScreenScrollView);
+    while (scrollView == nil) {
+        for (UIView *subview in superview.subviews) {
+            if ([subview isKindOfClass:SBLockScreenScrollViewClass])
+                scrollView = (SBLockScreenScrollView *)subview;
+        }
+
+        superview = superview.superview;
+        if (superview == nil)
+            break;
     }
-    else {
-        return _wallpaperView;
-    }
+
+    if (_blurryArtworkView.superview != nil)
+        [_blurryArtworkView removeFromSuperview];
+    [scrollView.superview insertSubview:_blurryArtworkView belowSubview:scrollView];
+}
+
+%new
++ (id)sharedInstance {
+    return _blurryArtworkView;
 }
 
 %end
