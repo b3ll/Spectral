@@ -42,7 +42,7 @@
 
     CGRect bounds = self.bounds;
 
-    CGRect width = MAX(bounds.size.width, bounds.size.height);
+    CGFloat width = MAX(bounds.size.width, bounds.size.height);
 
     CGRect imageViewFrame = bounds;
     imageViewFrame.size.width = floor(width * _zoomFactor);
