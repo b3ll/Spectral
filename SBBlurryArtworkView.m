@@ -42,9 +42,11 @@
 
     CGRect bounds = self.bounds;
 
+    CGRect width = MAX(bounds.size.width, bounds.size.height);
+
     CGRect imageViewFrame = bounds;
-    imageViewFrame.size.width = floor(imageViewFrame.size.width * _zoomFactor);
-    imageViewFrame.size.height = floor(imageViewFrame.size.height * _zoomFactor);
+    imageViewFrame.size.width = floor(width * _zoomFactor);
+    imageViewFrame.size.height = floor(width * _zoomFactor);
     imageViewFrame.origin.x = floor((bounds.size.width - imageViewFrame.size.width) / 2.0);
     imageViewFrame.origin.y = floor((bounds.size.height - imageViewFrame.size.height) / 2.0);
     _imageView.frame = imageViewFrame;
