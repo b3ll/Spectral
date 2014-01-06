@@ -1,18 +1,18 @@
 > NOTE: This is unfinished, and a really nasty hack. I have *no* clue what will explode, but nothing will be permanent :P
 
-Title TBD
+Spectral
 =============
 
 Make the iOS 7 lockscreen a little cleaner with blurred album artwork!
 
 Nothing Playing:
-![Nothing Playing](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/nothing.png "Nothing Playing")
+![Nothing Playing](https://github.com/b3ll/Spectral/raw/master/preview/nothing.png "Nothing Playing")
 
 Stock iOS 7:
-![Before](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/before.png "Before")
+![Before](https://github.com/b3ll/Spectral/raw/master/preview/before.png "Before")
 
 Fixed iOS 7:
-![After](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/after.png "After")
+![After](https://github.com/b3ll/Spectral/raw/master/preview/after.png "After")
 
 How do I compile?
 =============
