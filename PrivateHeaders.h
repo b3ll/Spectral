@@ -14,6 +14,9 @@
 - (void)_updateBlurImagesForVariant:(NSUInteger)variant;
 @end
 
+@interface NowPlayingArtPluginController : NSObject
+@end
+
 @interface SBFStaticWallpaperView : UIView
 - (instancetype)initWithFrame:(CGRect)frame wallpaperImage:(UIImage *)wallpaperImage;
 - (UIImageView *)contentView;

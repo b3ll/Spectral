@@ -54,14 +54,11 @@ static NSUInteger _uniqueIdentifier = 0;
     [[NSOperationQueue mainQueue] addOperationWithBlock:^(){
         SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
 
-        // Try to limit the number of times this needs to be run because it's expensive
+        //TODO: Try to limit the number of times this needs to be run because it's expensive
         NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
-        if (trackUniqueIdentifier != _uniqueIdentifier || _blurryArtworkView.artworkImage == nil) {
-            _uniqueIdentifier = trackUniqueIdentifier;
 
-            UIImage *artwork = mediaController.artwork;
-            self.lockscreenArtworkImage = artwork;
-        }
+        UIImage *artwork = mediaController.artwork;
+        self.lockscreenArtworkImage = artwork;
     }];
 }
 
