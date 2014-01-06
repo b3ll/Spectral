@@ -17,11 +17,15 @@
 
 #include <dlfcn.h>
 
+#define PREFERENCES_PATH @"/User/Library/Preferences/ca.adambell.blurredlockscreenartwork.plist"
+#define PREFERENCES_CHANGED_NOTIFICATION "ca.adambell.blurredlockscreenartwork.preferences-changed"
+
 %group NowPlayingArtView
 
 static SBBlurryArtworkView *_blurryArtworkView = nil;
+static NSDictionary *_preferences = nil;
 
-static NSUInteger _uniqueIdentifier = 0;
+// static NSUInteger _uniqueIdentifier = 0;
 
 %hook NowPlayingArtPluginController
 - (void)viewWillAppear:(BOOL)animated {
@@ -55,7 +59,7 @@ static NSUInteger _uniqueIdentifier = 0;
         SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
 
         //TODO: Try to limit the number of times this needs to be run because it's expensive
-        NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
+        //NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
 
         UIImage *artwork = mediaController.artwork;
         self.lockscreenArtworkImage = artwork;
@@ -65,6 +69,14 @@ static NSUInteger _uniqueIdentifier = 0;
 %new
 - (void)currentSongChanged:(NSNotification *)notification {
     [self updateLockscreenArtwork];
+}
+
+%new
+- (void)blurryArtworkPreferencesChanged {
+    NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:PREFERENCES_PATH];
+    BOOL enabled = [[prefs valueForKey:@"blurredLockscreenArtworkEnabled"] boolValue];
+
+    _blurryArtworkView.hidden = !enabled;
 }
 
 %new
@@ -115,14 +127,30 @@ static NSUInteger _uniqueIdentifier = 0;
 
     if (_blurryArtworkView.superview != nil)
         [_blurryArtworkView removeFromSuperview];
-    [scrollView.superview insertSubview:_blurryArtworkView belowSubview:scrollView];
+    if (scrollView != nil)
+        [scrollView.superview insertSubview:_blurryArtworkView belowSubview:scrollView];
 }
 
 %end
 
 %end
 
+static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    _preferences = [[NSDictionary alloc] initWithContentsOfFile:PREFERENCES_PATH];
+
+    [[%c(SBUIController) sharedInstance] blurryArtworkPreferencesChanged];
+}
+
 %ctor {
     dlopen("/System/Library/SpringBoardPlugins/NowPlayingArtLockScreen.lockbundle/NowPlayingArtLockScreen", 2);
+
+    _preferences = [[NSDictionary alloc] initWithContentsOfFile:PREFERENCES_PATH];
+    if (_preferences == nil) {
+        _preferences = @{ @"blurredLockscreenArtworkEnabled" : @(YES) };
+        [_preferences writeToFile:PREFERENCES_PATH atomically:YES];
+    }
+
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PREFERENCES_CHANGED_NOTIFICATION), NULL, CFNotificationSuspensionBehaviorCoalesce);
+
     %init(NowPlayingArtView);
 }

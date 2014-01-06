@@ -44,6 +44,7 @@
 
 - (void)setLockscreenArtworkImage:(UIImage *)artworkImage;
 - (void)updateLockscreenArtwork;
+- (void)blurryArtworkPreferencesChanged;
 @end
 
 @interface _NowPlayingArtView : UIView
