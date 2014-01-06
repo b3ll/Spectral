@@ -8,9 +8,9 @@ ADDITIONAL_CFLAGS = -fobjc-arc
 
 include theos/makefiles/common.mk
 
-TWEAK_NAME = BlurredLockscreenArtwork
-BlurredLockscreenArtwork_FILES = Tweak.xm SBBlurryArtworkView.m
-BlurredLockscreenArtwork_FRAMEWORKS = Foundation CoreGraphics QuartzCore UIKit MediaPlayer
+TWEAK_NAME = Spectral
+Spectral_FILES = Tweak.xm SBBlurryArtworkView.m
+Spectral_FRAMEWORKS = Foundation CoreGraphics QuartzCore UIKit MediaPlayer
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

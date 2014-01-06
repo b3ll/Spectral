@@ -3,15 +3,15 @@
 Title TBD
 =============
 
-Make the iOS 7 lockscreen proper with blurred album artwork!
+Make the iOS 7 lockscreen a little cleaner with blurred album artwork!
 
-Nothing Playing:  
+Nothing Playing:
 ![Nothing Playing](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/nothing.png "Nothing Playing")
 
-Stock iOS 7:  
+Stock iOS 7:
 ![Before](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/before.png "Before")
 
-Fixed iOS 7:  
+Fixed iOS 7:
 ![After](https://github.com/b3ll/BlurredLockscreenArtwork/raw/master/preview/after.png "After")
 
 How do I compile?
@@ -43,4 +43,5 @@ Feel free to follow me on twitter: [@b3ll](https://www.twitter.com/b3ll)! Though
 Special Thanks
 =============
 
+[@Surenix](https://www.twitter.com/Surenix) for the icon! :D
 me :P

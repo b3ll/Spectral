@@ -1,6 +1,6 @@
 //
 //  Tweak.xm
-//  BlurredLockscreenArtwork
+//  Spectral
 //
 //  Created by Adam Bell on 2014-01-02.
 //  Copyright (c) 2014 Adam Bell. All rights reserved.
@@ -17,12 +17,14 @@
 
 #include <dlfcn.h>
 
-#define PREFERENCES_PATH @"/User/Library/Preferences/ca.adambell.blurredlockscreenartwork.plist"
-#define PREFERENCES_CHANGED_NOTIFICATION "ca.adambell.blurredlockscreenartwork.preferences-changed"
+#define PREFERENCES_PATH @"/User/Library/Preferences/ca.adambell.spectral.plist"
+#define PREFERENCES_CHANGED_NOTIFICATION "ca.adambell.spectral.preferences-changed"
+#define PREFERENCES_ENABLED_KEY @"spectralEnabled"
 
 %group NowPlayingArtView
 
 static SBBlurryArtworkView *_blurryArtworkView = nil;
+
 static NSDictionary *_preferences = nil;
 
 // static NSUInteger _uniqueIdentifier = 0;
@@ -74,7 +76,7 @@ static NSDictionary *_preferences = nil;
 %new
 - (void)blurryArtworkPreferencesChanged {
     NSDictionary *prefs = [[NSDictionary alloc] initWithContentsOfFile:PREFERENCES_PATH];
-    BOOL enabled = [[prefs valueForKey:@"blurredLockscreenArtworkEnabled"] boolValue];
+    BOOL enabled = [[prefs valueForKey:PREFERENCES_ENABLED_KEY] boolValue];
 
     _blurryArtworkView.hidden = !enabled;
 }
@@ -146,7 +148,7 @@ static void PreferencesChangedCallback(CFNotificationCenterRef center, void *obs
 
     _preferences = [[NSDictionary alloc] initWithContentsOfFile:PREFERENCES_PATH];
     if (_preferences == nil) {
-        _preferences = @{ @"blurredLockscreenArtworkEnabled" : @(YES) };
+        _preferences = @{ PREFERENCES_ENABLED_KEY : @(YES) };
         [_preferences writeToFile:PREFERENCES_PATH atomically:YES];
     }
 

@@ -1,6 +1,6 @@
 //
 //  SBBlurryArtworkView.m
-//  BlurredLockscreenArtwork
+//  Spectral
 //
 //  Created by Adam Bell on 2014-01-03.
 //  Copyright (c) 2014 Adam Bell. All rights reserved.

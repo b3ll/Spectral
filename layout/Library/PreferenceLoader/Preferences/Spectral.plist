@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>Spectral</string>
+	<key>entry</key>
+	<dict>
+		<key>cell</key>
+		<string>PSLinkCell</string>
+		<key>icon</key>
+		<string>Spectral.png</string>
+		<key>label</key>
+		<string>Spectral</string>
+	</dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>ca.adambell.spectral</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>key</key>
+			<string>spectralEnabled</string>
+			<key>PostNotification</key>
+			<string>ca.adambell.spectral.preferences-changed</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>height</key>
+			<real>20</real>
+			<key>footerText</key>
+			<string>© 2014 Adam Bell
+Thanks to Surenix for the icon!</string>
+		</dict>
+	</array>
+</dict>
+</plist>
