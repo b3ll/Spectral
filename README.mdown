@@ -3,7 +3,7 @@ Spectral
 
 Make the iOS 7 lockscreen a little cleaner with blurred album artwork!
 
-![Spectral Preview](https://github.com/b3ll/Spectral/raw/master/preview/SpectralPreview.png "Spectral Preview")
+![Spectral Preview](https://github.com/b3ll/Spectral/raw/master/preview/SpectralPreview.png "Spectral Preview")  
 
 How do I compile?
 =============
@@ -29,10 +29,11 @@ Also if you do make some changes, feel free to make a pull request and help make
 Contact Info?
 =============
 
-Feel free to follow me on twitter: [@b3ll](https://www.twitter.com/b3ll)! Though I don't really like to handle support requests there...
+Feel free to follow me on twitter: [@b3ll](https://www.twitter.com/b3ll)!  
+Though I don't really like to handle support requests there...
 
 Special Thanks
 =============
 
-[@Surenix](https://www.twitter.com/Surenix) for the icon! :D
-me :P
+[@Surenix](https://www.twitter.com/Surenix) for the icon! :D  
+me :P  
