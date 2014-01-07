@@ -27,7 +27,8 @@ static SBBlurryArtworkView *_blurryArtworkView = nil;
 
 static NSDictionary *_preferences = nil;
 
-// static NSUInteger _uniqueIdentifier = 0;
+// Some apps are weird and set the now playing info a billion times a second... this tries to avoid that
+static NSData *_artworkData;
 
 %hook NowPlayingArtPluginController
 - (void)viewWillAppear:(BOOL)animated {
@@ -61,7 +62,11 @@ static NSDictionary *_preferences = nil;
         SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
 
         //TODO: Try to limit the number of times this needs to be run because it's expensive
-        //NSUInteger trackUniqueIdentifier = mediaController.trackUniqueIdentifier;
+        NSData *artworkData = [[mediaController _nowPlayingInfo] valueForKey:@"artworkData"];
+        if (artworkData == _artworkData) {
+            return;
+        }
+        _artworkData = artworkData;
 
         UIImage *artwork = mediaController.artwork;
         self.lockscreenArtworkImage = artwork;
