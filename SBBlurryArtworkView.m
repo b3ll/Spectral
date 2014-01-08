@@ -91,7 +91,11 @@
     }
     else {
         SBWallpaperController *controller = [objc_getClass("SBWallpaperController") sharedInstance];
-        _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:image];
+        
+        if ([controller respondsToSelector:@selector(_newWallpaperViewForProcedural:orImage:)])
+            _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:image];
+        else
+            _wallpaperView = [controller _newWallpaperViewForProcedural:nil orImage:image forVariant:VARIANT_LOCKSCREEN];
 
         // SBWallpaperController does some crazy shenanigans with subviews so let's remove that...
         [_wallpaperView removeFromSuperview];

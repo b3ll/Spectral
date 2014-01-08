@@ -6,6 +6,7 @@
 
 - (void)setLockscreenOnlyWallpaperAlpha:(float)alpha;
 - (id)_newWallpaperViewForProcedural:(id)proceduralWallpaper orImage:(UIImage *)image;
+- (id)_newWallpaperViewForProcedural:(id)proceduralWallpaper orImage:(UIImage *)image forVariant:(int)variant; //iOS 7.1
 - (id)_clearWallpaperView:(id *)wallpaperView;
 - (void)_handleWallpaperChangedForVariant:(NSUInteger)variant;
 - (void)_updateSeparateWallpaper;
