@@ -2,7 +2,7 @@ Package: ca.adambell.spectral
 Name: Spectral
 Depends: mobilesubstrate
 Conflicts: ca.adambell.blurredlockscreenartwork
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm
 Description: Give the iOS 7 lockscreen a little more character with blurred album artwork!
 Maintainer: Adam Bell
