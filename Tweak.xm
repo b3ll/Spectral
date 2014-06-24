@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Adam Bell. All rights reserved.
 //
 
+%config(generator=MobileSubstrate);
+
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>

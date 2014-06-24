@@ -9,6 +9,7 @@ ADDITIONAL_CFLAGS = -fobjc-arc
 include theos/makefiles/common.mk
 
 TWEAK_NAME = Spectral
+Spectral_LIBRARIES = substrate
 Spectral_FILES = Tweak.xm SBBlurryArtworkView.m
 Spectral_FRAMEWORKS = Foundation CoreGraphics QuartzCore UIKit MediaPlayer
 
