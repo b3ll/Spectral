@@ -49,6 +49,7 @@
 @end
 
 @interface _NowPlayingArtView : UIView
+- (UIImageView *)artworkView;
 @end
 
 @interface SBLockScreenScrollView : UIScrollView

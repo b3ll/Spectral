@@ -1,7 +1,7 @@
 Spectral
 =============
 
-Give the iOS 7 lockscreen a little more character with blurred album artwork!
+Give the iOS lockscreen a little more character with blurred album artwork!
 
 ![Spectral Preview](https://github.com/b3ll/Spectral/raw/master/preview/SpectralPreview.png "Spectral Preview")  
 

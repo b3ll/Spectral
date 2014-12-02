@@ -30,7 +30,10 @@ static SBBlurryArtworkView *_blurryArtworkView = nil;
 static NSDictionary *_preferences = nil;
 
 // Some apps are weird and set the now playing info a billion times a second... this tries to avoid that
-static NSData *_artworkData;
+static __weak NSData *_artworkData;
+static __weak UIImage *_artworkImage;
+
+static __weak _NowPlayingArtView *_artView = nil;
 
 %hook NowPlayingArtPluginController
 - (void)viewWillAppear:(BOOL)animated {
@@ -61,17 +64,26 @@ static NSData *_artworkData;
 %new
 - (void)updateLockscreenArtwork {
     [[NSOperationQueue mainQueue] addOperationWithBlock:^(){
-        SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
+        UIImage *artwork = nil;
 
-        //TODO: Try to limit the number of times this needs to be run because it's expensive
-        NSData *artworkData = [[mediaController _nowPlayingInfo] valueForKey:@"artworkData"];
-        if (artworkData == _artworkData) {
-            return;
+        if ([[UIDevice currentDevice].systemVersion floatValue] < 8.0) {
+            SBMediaController *mediaController = [%c(SBMediaController) sharedInstance];
+
+            //TODO: Try to limit the number of times this needs to be run because it's expensive
+            NSData *artworkData = [[mediaController _nowPlayingInfo] valueForKey:@"artworkData"];
+            if (artworkData == _artworkData) {
+                return;
+            }
+            _artworkData = artworkData;
+            artwork = mediaController.artwork;
+        } else {
+            artwork = _artView.artworkView.image;
         }
-        _artworkData = artworkData;
 
-        UIImage *artwork = mediaController.artwork;
-        self.lockscreenArtworkImage = artwork;
+        if (artwork != _artworkImage) {
+            self.lockscreenArtworkImage = artwork;
+            _artworkImage = artwork;
+        }
     }];
 }
 
@@ -110,7 +122,24 @@ static NSData *_artworkData;
 
 %end
 
+%hook SBMediaController
+
+- (void)setNowPlayingInfo:(id)info
+{
+    %orig;
+    [[%c(SBUIController) sharedInstance] updateLockscreenArtwork];
+}
+
+%end
+
 %hook _NowPlayingArtView
+
+- (id)initWithFrame:(CGRect)frame
+{
+    id orig = %orig;
+    _artView = orig;
+    return orig;
+}
 
 - (void)layoutSubviews {
     %orig;
